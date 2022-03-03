@@ -11,7 +11,7 @@ import javax.persistence.*;
 @ToString(of = {"id", "username", "age"})
 public class Member {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "member_id")
     private Long id;
     private String username;

@@ -2,6 +2,13 @@ package study.querydsl;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.EntityPath;
+import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.core.types.dsl.StringExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +20,10 @@ import study.querydsl.entity.*;
 
 import javax.persistence.EntityManager;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static study.querydsl.entity.QMember.*;
@@ -250,5 +260,33 @@ public class QuerydslBasicTest {
             System.out.println("tuple = " + tuple);
         }
 
+    }
+
+    @Test
+    public void concat() {
+        QMember memberSub = new QMember("memberSub");
+
+        StringExpression otherwise = new CaseBuilder()
+                .when(memberSub.age.between(0, 20)).then("20대 이하")
+                .when(memberSub.age.between(21, 30)).then("20대")
+                .otherwise("30대 이상");
+
+        List<Tuple> results = queryFactory
+                .select(
+                        otherwise.stringValue(),
+                        member.age.avg()
+                )
+                .from(
+                        (EntityPath<?>) JPAExpressions
+                        .select(
+                                otherwise.stringValue(),
+                                memberSub.age
+                        )
+                                .from(memberSub)
+                )
+                .groupBy(otherwise.stringValue(), member.age)
+                .fetch();
+
+        System.out.println("temp = " + results);
     }
 }
